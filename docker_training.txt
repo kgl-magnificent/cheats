@@ -1,0 +1,151 @@
+#установка
+sudo apt update && sudo apt install docker.io -y
+sudo usermod -aG docker $USER - !ОБЯЗАТЕЛЬНО!
+
+контейнер - экзепляр образа
+
+docker container run -it <image_name> - подключение к докеру 
+docker container list -a - все запущенные контейнеры
+docker container run -it --name meconteiner -it <image_name> - подключение к докеру 
+
+
+image - один раз скачивается и используется
+image ищется на локальном устройстве, потом на идет на docker hub
+
+docker container run --rm -d -p 
+-d -отделенно
+-p порт ip_adress:8080:80 1-порт хоста, 2-порт контейнера
+-p порт ip_adress::80 1-порт хоста автоматически назначается, 2-порт контейнера
+
+docker container port <container_id>
+
+docker container pause/unpause <container_id>
+docker container stop <container_id>
+
+id -это первые две буквы контейнер айди
+
+docker container kill - удаление немедленно
+docker container start - возобновление контейнера
+
+run - это create и start последовательно 
+
+ОТЛАДКА:
+docker container logs <container_id> - логи работы контейнера
+docker container logs -f <container_id> - логи реального времени
+docker container exec -it  - переход в интерактивный режим 
+docker container cp имя:путь локальный путь
+docker container ispect <container_id> - низкоуровневая отладочная информация
+docker container exec -it CONTAINER_ID bash
+IMAGES
+docker image pull <image_name>
+docker imege ls - выведелт все образы
+docker image history
+docker image build -t название ping .
+docker builder build -t название образа .(путь в докер файлу)
+docker image tag название образа название тега
+тег - имя образа 
+
+в файле .dockerignore можно указать то, что не надо заливать 
+docker image rm имя образа - удаление образа
+
+docker system df - показывает использование дискового пространства
+dockerfile - иструкция по созданию образа
+docker image prune -удаление неиспользуемых образов
+
+docker container commit - создание нового образа (в локальный репозиторий естественно) чтобы его можно было использовать повторно
+
+basybox - маленький дистрибктив линукс
+
+DOCKERFILE
+
+FROM - базовый образ для текущего образа
+WORKDIR - создание рабочей директории
+WORKDIR /user
+WORKDIR app -> получится /user/app
+COPY <src> <dest>
+ADD копирует файлы в образ, в том числе из URL
+RUN - запускает команды на исполнение
+ENTRYPOINT - команда, можно передать параметрв
+CMD - аргумент или параметр
+
+команда --mount позволяет примантировать папку к дистку
+
+RUN выполняется при сборке образа
+CMD при запуске контейнера, при запуске контейнера ее можно переопределить 
+
+VOLUMES - используются для хранения данных при перезупуске контейнера.
+bind mounts: #аналог общей папки
+при запуске контенера! docker container run
+--mount type=bind, source=/opt/data/mysql(на хосте), target=/db (в контейнере) 
+--volume /opt/data/mydb:/db - монтируем папку с хоста в контейнер
+или 
+-v /opt/data/mydb:/db 
+проверка mount | grep app - внутри контейнера
+docker container inspect -f "{{json.Mounts}}" pydev(имя запущенного контейнера)
+docker volumes create myvol - создание тома
+docker container run -v myvol:/mydir myimage
+volume это область подклбчаемая к контейнерам, можно подключать к разным контейнерам
+docker volume create - создание 
+docker volume inspect
+docker volume ls
+docker volume rm
+docker volume prone
+VOLUME ["/path", "/path2"..] - создание томов в dockerfile
+если контейнер хапускается с командой --rm то в случае, если в образе создавался том, он будет очищен
+--volumes-from - для совместнго использования контейнера
+NETWORK 
+docker system info - вывод всех установленных плагинов
+docker network ls - список всх актуальных сетей
+docker network create - создание новой сети
+docker network create -d bridge <br_name> - создание нового моста
+docker container run -- rm -d -it --network user_bridge --name user_bridge1 alpine - подключение к мосту
+docker network connect <сеть> <контейнер> -подключение к сети
+docker network disconnect - отключение контейнера от сети
+docker network rm - удаление сети
+docker container run --rm -d -network host - создание хоста при запуске
+
+DOCKER COMPOSE
+docker-compose.yml
+services:
+  db:
+    image: название образа
+    command - переопределение CMD
+    depends_on- поднимается после
+либо image (скачиваем или берем локально, либо собираем через build, должен быть docker file)
+docker compose up -d - развернуть в фоновом режиме
+docker compose down/stop - остановка контейнера
+docker compose ps - список контейнеров
+docker compose ls - список запущенных приложений
+
+DOCKER SWARM - оркестратор, аналог k8s
+
+ПОСЛЕДОВАТЕЛЬНОСТЬ ДЕЙСТВИЙ
+docker swarm init - инициализация узла
+docker network create swarmnet- создаем сеть 
+docker run --privileged --name node1 --hostname node1 --network swarmnet -dit docker:dind (образ докера в котором есть докер)
+docker run --privileged --name node2 --hostname node2 --network swarmnet -dit docker:dind 
+docker exec -it node1 sh -подключаемся к node1
+node1# docker swarm init - (делаем ноду управляющей)
+docker exec -it node2 sh -подключаемся к node2
+docker swarm join --token <токет, возникает при инициализации управляющей ноды>
+
+инфо
+docker node ls - позволяет вывести информацию о всех нодах 
+docker node inspect - вывод информации о ноде
+docker swarm leave - отключение узла от кластера
+docker swarm join-token worker - вывод такена
+docker node promote NODE_ID - повышениие узла из работающего в управляющий
+
+docker service create IMAGE - создание сервиса 
+docker service ls - список созданных сервисов
+docker-machine create <имя машины>
+docker service scale web=2 - масштабирование (будет 2 ноды)
+docker service update --replicas=2 - анологично
+docker node inspect <name> - получение сведений об узле
+docker swarm leave - выходим из кластера
+docker network create -d overlay --attachable myoverlay - создаем сеть overlay для связи демонов (attachable - если планируем подключать пользов. контейнеры)
+docker service update --network-add myoverlay hello - обновляем конфигурацию сервиса, добавив в нее сеть. тк обычно сервис запускается без какой-либо сети
+docker service update --constraint-add "node.hostname = node2" hello - ограничили имя хоста для работающих контейнеров
+docker service update --constraint-rm "node.hostname = node2" hello - удаление ограничения
+
+docker stack - аналог docker compose для docker swarm
