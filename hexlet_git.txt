@@ -1,0 +1,15 @@
+git branch - создание новой ветки репозитория
+git merge - слияние ветвей 
+git pull: git fetch получение изменений и git merge слияние веток git pull --rebase - стягивание 
+Команда git merge выполняется из той ветки, в которую мы сливаем изменения, а аргументом передаётся имя той ветки, которую мы сливаем.
+
+git status
+
+git add file_name - добавление файла в раздел staged
+
+git commit -m "Vse_tty" 
+git push origin master
+git log - инфорсация о коммитаах
+git show - показывает именения вннсенные коммитом
+pull request - запрос на включение изменений
+
