@@ -1,0 +1,91 @@
+SALTSTACK
+/etc/salt/master(master.d) - стартовая конфигурация мастера
+/etc/salt/minion(minion.d) - стартовая конфигурация миньона
+/etc/salt/cloud - конфигурационный файл для создания облачных миньонов
+/var/log/salt - журнал логирования
+/srv/salt - файлы для работы хоста 
+/usr/lib/python**/sit-packages/salt - месторасположение модулей 
+
+МАСТЕР ДОЛЖЕН ЗАПУСКАТЬСЯ ЧЕРЕЗ ПОЛЬЗОВАТЕЛЯ SALT
+БАЗОВЫЙ СИНТАКСИС
+salt [-ключ] 'цель' модуль.раздел ['аргументы']
+salt '*' module.function (в ковычках указываются миньоны)
+
+SALT-CLOUD 
+/etc/salt/cloud(cloud.d) - тут прописываются основные конфиги
+/etc/salt/cloud.profiles(cloud.profiles.d) тут прописываются основные конфиги профилей (запуск обеспечивается salt-cloud -p <profile_name> <name_of_vm>) аналог images в докере
+/etc/salt/cloud.providers(cloud.providers.d) тут прописываются провайдеры 
+
+СОЗДАНИЕ КАРТЫ СРЕД (MAP-файлы)
+создается файл /etc/salt/cloud.maps.d/*.map
+
+
+SALT-KEY
+master# salt-key -F master - выводит ключи мастера и принятые ключи миньонов
+
+
+systemctl restart salt-master - перегружаем мастер
+
+SALT_SERVER
+https://ansible-cn.readthedocs.io/en/latest/topics/tutorials/gitfs.html - документация наэтом сайте.
+https://ansible-cn.readthedocs.io/en/latest/topics/tutorials/index.html#advanced-topics 
+в /etc/salt/master можно прописать
+file_roots: 
+  base:
+    - /srv/salt (папка с которой будет начинаться salt://) - если положить туда файл, то он будет виден в salt://
+
+salt-run fileserver.update - обновление списка серверов (salt-run - запуск на мастере)
+salt-run fileserver.file_list - выведет список файлов на сешдурвере
+установка salt-pip install pygit2 устанавливаем последнюю версию
+
+для гита необходимо прописпть
+gitfs_provider: pygit2
+#для ssh
+gitfs_remotes:
+  - git@github.com: (ссылка с гита)
+    - privkey: /home/salt/.ssh/id_ed22519
+    - pubkey: /home/salt/.ssh/id_ed22519.pub
+    - mountpoint: salt:// - точка монтирования
+#для https
+gitfs_remotes:
+  - https://github.com:
+    - user: login
+    - password: passwd
+    - mountpoint: salt:// - точка монтирования
+
+ГЕНЕРАЦИЯ КЛЮЧЕЙ
+sudo -u salt ssh-keygen -t ed25519 #генерируем для пользователя salt
+#добавляем в вебморду ключ открытый
+ssh -t git@github.com - добавляем хост в known_hosts
+
+salt '*' cp.get_file salt://path /path/minion
+
+
+ПОЛЕЗНЫЕ КОМАНДЫ (откуда-то скопировал)
+salt-call --versions-report - отчет по версиям
+salt '*' grains.ls - просмотр какие факты есть
+salt '*' grains.items - просмотр собранных фактов
+salt '*' pillar.ls - показать какие пилары есть
+
+salt '*' pillar.items - показать пилары
+salt '*' state.show_top - просмотр top файлов
+salt-run fileserver.update - обновление файлов, подгрузка изменений из гита при необходимости.
+salt-run fileserver.file_list - показать список файлов, дополнительно можно указать окружение, например saltenv=prod
+salt-run fileserver.dir_list - показать список папок
+salt-run fileserver.envs
+salt-run git_pillar.update - обновить пилары из гита
+salt-run pillar.show_pillar
+salt-run pillar.show_top
+salt-run saltutil.sync_pillar - синхронизировать пилары с мастера на миньоны. Можно указать _all, и тогда засинхронизируется все.
+
+
+FORMULAS:
+/srv/pillar/core.sls
+/etc/salt/grains - факты о миньоне 
+в формуле монжно использовать grains через grains['key']
+
+salt '*' saltutil.refresh_pillar остновление инфы о пиларах
+salt '*' pillar.items - вывод всех
+ФОРМУЛА ХРАНЯТСЯ
+/srv/salt/name.sls - запуск salt '*' state.sls name
+salt '*' state.show_sls name - показывает состояния
