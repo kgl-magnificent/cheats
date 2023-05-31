@@ -1,3 +1,6 @@
+
+https://github.com/alexeev79/Docker-manual/blob/master/%D0%9E%D1%81%D0%BD%D0%BE%D0%B2%D1%8B%20Docker.md - конспект парня с курсов
+
 #установка
 sudo apt update && sudo apt install docker.io -y
 sudo usermod -aG docker $USER - !ОБЯЗАТЕЛЬНО!
